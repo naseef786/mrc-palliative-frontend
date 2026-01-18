@@ -1,24 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+// app/_layout.tsx
+import { i18n } from "@/i18n";
+import { useLanguageStore } from "@/store/language.store";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { AppThemeProvider } from "../theme/ThemeProvider";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const language = useLanguageStore((s) => s.language);
 
+  useEffect(() => {
+    i18n.locale = language;
+  }, [language]);
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppThemeProvider>
+        <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: 'black' }}>
+            {/* StatusBar for theme-aware content */}
+
+
+            {/* Expo Router Stack */}
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </AppThemeProvider>
+    </QueryClientProvider>
   );
 }
