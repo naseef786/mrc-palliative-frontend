@@ -1,6 +1,7 @@
+// store/auth.store.ts
+import { createAsyncStorage } from "@/utils/asyncStorageWrapper";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { createAsyncStorage } from "@/utils/asyncStorageWrapper";
 
 export type UserRole = "admin" | "volunteer";
 
