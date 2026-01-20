@@ -9,6 +9,7 @@ import { useAuthStore } from "../../store/auth.store";
 import AppStatusBar from "@/components/AppStatusBar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useThemeStore } from "@/store/theme.store";
+import CertificationGeneration from "./certificate_generation";
 import Help from "./help";
 import Home from "./home";
 import PatientList from "./patientList";
@@ -116,6 +117,7 @@ function CustomDrawerContent({ navigation }: any) {
 
             <DrawerItem label="Settings" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("Settings", { screen: "Settings" })} />
             <DrawerItem label="Help" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("Help", { screen: "Help" })} />
+            <DrawerItem label="certificate" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("certificate_generation", { screen: "certificate_generation" })} />
 
             {/* Theme Switcher */}
             <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: theme.colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -191,6 +193,20 @@ export default function DrawerLayout() {
                                 <Text style={{ fontSize: 24, color: theme.colors.text }}>☰</Text>
                             </TouchableOpacity>
                             <Text style={{ fontSize: 18, color: theme.colors.text, marginLeft: 16 }}>Help</Text>
+                        </View>
+                    )
+                }}
+            />
+            <Drawer.Screen
+                name="certificate_generation"
+                component={CertificationGeneration}
+                options={{
+                    header: ({ navigation }) => (
+                        <View style={{ flexDirection: "row", alignItems: "center", padding: 12 }}>
+                            <TouchableOpacity onPress={() => navigation.openDrawer()}>
+                                <Text style={{ fontSize: 24, color: theme.colors.text }}>☰</Text>
+                            </TouchableOpacity>
+                            <Text style={{ fontSize: 18, color: theme.colors.text, marginLeft: 16 }}>Certificate Generation</Text>
                         </View>
                     )
                 }}
