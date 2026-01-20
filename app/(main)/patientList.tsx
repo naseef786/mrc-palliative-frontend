@@ -1,5 +1,6 @@
 import { PatientCard } from "@/components/PatientCard";
 import { PatientFormModal } from "@/components/PatientFormModal";
+import { useAuthStore } from "@/store/auth.store";
 import { Patient, usePatientStore } from "@/store/patient.store";
 import { useTheme } from "@react-navigation/native";
 import { useMemo, useState } from "react";
@@ -17,10 +18,11 @@ interface Props {
   role: "admin" | "volunteer";
 }
 
-export default function PatientList({ role = "admin" }: Props) {
+export default function PatientList() {
   const theme = useTheme();
   const { patients, addPatient, updatePatient, deletePatient } =
     usePatientStore();
+  const role = useAuthStore((s) => s.role);
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Patient | null>(null);
@@ -84,7 +86,7 @@ export default function PatientList({ role = "admin" }: Props) {
         renderItem={({ item }) => (
           <PatientCard
             item={item}
-            role={role}
+            role={role as any}
             onEdit={() => openEdit(item)}
             onDelete={() => deletePatient(item.id)}
           />
