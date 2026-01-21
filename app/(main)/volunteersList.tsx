@@ -1,67 +1,103 @@
+import { getVolunteersApi, Volunteer } from "@/api/volunteer.api";
 import { useTheme } from "@react-navigation/native";
-import { useState } from "react";
-import { FlatList, LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    FlatList,
+    LayoutAnimation,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    UIManager,
+    View,
+} from "react-native";
 
 if (Platform.OS === "android") {
     UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
-/* ---------------- MOCK DATA ---------------- */
-
-const MOCK_VOLUNTEERS = [
-    {
-        id: "1",
-        name: "Aisha Khan",
-        phone: "+971 50 123 4567",
-        email: "aisha.khan@email.com",
-        skills: ["Nursing", "Elder Care"],
-        completedTasks: 42,
-        status: "Active",
-    },
-    {
-        id: "2",
-        name: "Mohammed Ali",
-        phone: "+971 55 987 6543",
-        email: "mohammed.ali@email.com",
-        skills: ["First Aid", "Patient Support"],
-        completedTasks: 31,
-        status: "Busy",
-    },
-    {
-        id: "3",
-        name: "Sara Ahmed",
-        phone: "+971 52 444 2299",
-        email: "sara.ahmed@email.com",
-        skills: ["Physiotherapy", "Home Care"],
-        completedTasks: 58,
-        status: "Active",
-    },
-];
-
-/* ---------------- COMPONENT ---------------- */
+const LIMIT = 10;
 
 export default function VolunteersList() {
     const theme = useTheme();
+
+    const [data, setData] = useState<Volunteer[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [search, setSearch] = useState("");
     const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const fetchVolunteers = async (reset = false) => {
+        if (loading || (!hasMore && !reset)) return;
+
+        setLoading(true);
+        try {
+            const res = await getVolunteersApi({
+                page: reset ? 1 : page,
+                limit: LIMIT,
+                search,
+            });
+
+            setHasMore(res.pagination.hasMore);
+            setData((prev) => (reset ? res.data : [...prev, ...res.data]));
+            setPage((prev) => (reset ? 2 : prev + 1));
+        } catch (e) {
+            setHasMore(false);
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        setHasMore(true);
+        fetchVolunteers(true);
+    }, [search]);
 
     const toggleExpand = (id: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setExpandedId(expandedId === id ? null : id);
+        setExpandedId((prev) => (prev === id ? null : id));
     };
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            {/* 🔍 SEARCH */}
+            <TextInput
+                placeholder="Search volunteers..."
+                placeholderTextColor={theme.colors.text + "66"}
+                value={search}
+                onChangeText={setSearch}
+                style={[
+                    styles.search,
+                    {
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text,
+                        backgroundColor: theme.colors.card,
+                    },
+                ]}
+            />
+
+            {/* LIST */}
             <FlatList
-                data={MOCK_VOLUNTEERS}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={{ padding: 16 }}
+                data={data}
+                keyExtractor={(item) => item._id}
+                contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
                 showsVerticalScrollIndicator={false}
+                onEndReached={() => fetchVolunteers()}
+                onEndReachedThreshold={0.4}
+                ListFooterComponent={
+                    loading ? <ActivityIndicator style={{ marginVertical: 20 }} /> : null
+                }
                 renderItem={({ item }) => {
-                    const expanded = expandedId === item.id;
+                    const expanded = expandedId === item._id;
 
                     return (
                         <Pressable
-                            onPress={() => toggleExpand(item.id)}
+                            onPress={() => toggleExpand(item._id)}
                             style={[
                                 styles.card,
                                 {
@@ -70,73 +106,64 @@ export default function VolunteersList() {
                                 },
                             ]}
                         >
-                            {/* Header Row */}
+                            {/* HEADER */}
                             <View style={styles.header}>
                                 <View>
                                     <Text style={[styles.name, { color: theme.colors.text }]}>
                                         {item.name}
                                     </Text>
-                                    <Text style={{ color: theme.colors.text, opacity: 0.6 }}>
-                                        {item.completedTasks} tasks completed
+                                    <Text style={[styles.subText, { color: theme.colors.text }]}>
+                                        {item.email}
                                     </Text>
                                 </View>
 
                                 <View
                                     style={[
                                         styles.status,
-                                        {
-                                            backgroundColor:
-                                                item.status === "Active"
-                                                    ? "#22c55e"
-                                                    : "#f97316",
-                                        },
+                                        { backgroundColor: theme.colors.primary + "22" },
                                     ]}
                                 >
-                                    <Text style={styles.statusText}>{item.status}</Text>
+                                    <Text
+                                        style={{
+                                            color: theme.colors.primary,
+                                            fontSize: 12,
+                                            fontWeight: "600",
+                                        }}
+                                    >
+                                        Volunteer
+                                    </Text>
                                 </View>
                             </View>
 
-                            {/* Expanded Section */}
+                            {/* EXPANDED */}
                             {expanded && (
                                 <View style={styles.details}>
                                     <InfoRow label="Phone" value={item.phone} theme={theme} />
-                                    <InfoRow label="Email" value={item.email} theme={theme} />
-
-                                    <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                                        Skills
-                                    </Text>
-
-                                    <View style={styles.skillsContainer}>
-                                        {item.skills.map((skill, index) => (
-                                            <View
-                                                key={index}
-                                                style={[
-                                                    styles.skillChip,
-                                                    { backgroundColor: theme.colors.primary + "22" },
-                                                ]}
-                                            >
-                                                <Text
-                                                    style={{
-                                                        color: theme.colors.primary,
-                                                        fontSize: 12,
-                                                    }}
-                                                >
-                                                    {skill}
-                                                </Text>
-                                            </View>
-                                        ))}
-                                    </View>
+                                    <InfoRow label="Role" value={item.role} theme={theme} />
                                 </View>
                             )}
                         </Pressable>
                     );
                 }}
             />
+
+            {/* ➕ ADD VOLUNTEER BUTTON */}
+            <TouchableOpacity
+                style={[
+                    styles.fab,
+                    { backgroundColor: theme.colors.primary },
+                ]}
+                onPress={() => {
+                    console.log("Open Add Volunteer Modal");
+                }}
+            >
+                <Text style={styles.fabText}>＋</Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
-/* ---------------- SMALL COMPONENTS ---------------- */
+/* ---------- SMALL COMPONENT ---------- */
 
 function InfoRow({ label, value, theme }: any) {
     return (
@@ -147,22 +174,27 @@ function InfoRow({ label, value, theme }: any) {
     );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ---------- STYLES ---------- */
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
 
+    search: {
+        margin: 16,
+        borderWidth: 1,
+        borderRadius: 14,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 15,
+    },
+
     card: {
-        borderRadius: 16,
+        borderRadius: 18,
         borderWidth: 1,
         padding: 16,
         marginBottom: 12,
-        shadowColor: "#000",
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
     },
 
     header: {
@@ -176,43 +208,43 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
 
+    subText: {
+        fontSize: 13,
+        opacity: 0.6,
+        marginTop: 2,
+    },
+
     status: {
         paddingHorizontal: 12,
-        paddingVertical: 4,
+        paddingVertical: 6,
         borderRadius: 999,
     },
 
-    statusText: {
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "600",
-    },
-
     details: {
-        marginTop: 12,
+        marginTop: 14,
+        gap: 6,
     },
 
     infoRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginBottom: 6,
     },
 
-    sectionTitle: {
-        marginTop: 10,
-        marginBottom: 6,
-        fontWeight: "600",
+    fab: {
+        position: "absolute",
+        right: 20,
+        bottom: 30,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 4,
     },
 
-    skillsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-    },
-
-    skillChip: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 20,
+    fabText: {
+        color: "#fff",
+        fontSize: 30,
+        lineHeight: 32,
     },
 });
