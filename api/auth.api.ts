@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = "http://192.168.1.16:5000/api";
+import API from "@/api/axios";
 
 export interface LoginPayload {
     email: string;
@@ -15,13 +13,11 @@ export interface SignupPayload {
 }
 
 export const loginApi = async (payload: LoginPayload) => {
-    const res = await axios.post(`${API_URL}/auth/login`, payload);
-    console.log(res);
-
-    return res.data;
+    const { data } = await API.post("/auth/login", payload);
+    return data;
 };
 
 export const signupApi = async (payload: SignupPayload) => {
-    const res = await axios.post(`${API_URL}/auth/signup`, payload);
-    return res.data;
+    const { data } = await API.post("/auth/signup", payload);
+    return data;
 };

@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { nanoid } from "nanoid/non-secure";
 
 export interface Patient {
   id: string;
@@ -9,31 +8,45 @@ export interface Patient {
   dob: string;
   address: string;
   emergencyContact: string;
-  medicalHistory?: string;
+  medicalHistory: string;
 }
 
 interface PatientState {
   patients: Patient[];
-  addPatient: (data: Omit<Patient, "id">) => void;
-  updatePatient: (id: string, data: Partial<Patient>) => void;
-  deletePatient: (id: string) => void;
+  setPatients: (patients: Patient[]) => void;
+  appendPatients: (patients: Patient[]) => void;
+  upsertPatient: (patient: Patient) => void;
+  removePatient: (id: string) => void;
 }
 
 export const usePatientStore = create<PatientState>()(
   persist(
     (set) => ({
       patients: [],
-      addPatient: (data) =>
+
+      setPatients: (patients) => set({ patients }),
+
+      appendPatients: (patients) =>
         set((state) => ({
-          patients: [...state.patients, { id: nanoid(), ...data }],
+          patients: [...state.patients, ...patients],
         })),
-      updatePatient: (id, data) =>
-        set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === id ? { ...p, ...data } : p
-          ),
-        })),
-      deletePatient: (id) =>
+
+      upsertPatient: (patient) =>
+        set((state) => {
+          const exists = state.patients.some(
+            (p) => p.id === patient.id
+          );
+
+          return {
+            patients: exists
+              ? state.patients.map((p) =>
+                  p.id === patient.id ? patient : p
+                )
+              : [patient, ...state.patients],
+          };
+        }),
+
+      removePatient: (id) =>
         set((state) => ({
           patients: state.patients.filter((p) => p.id !== id),
         })),
