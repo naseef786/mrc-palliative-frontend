@@ -48,7 +48,7 @@ export default {
   },
   status: {
     pending: "കാത്തിരിക്കുന്നു",
-    inProgress: "നടന്നുകൊണ്ടിരിക്കുന്നു",
+    "in-progress": "നടന്നുകൊണ്ടിരിക്കുന്നു",
     completed: "പൂർത്തിയായി",
     expired: "കാലഹരണപ്പെട്ടു",
   },
@@ -68,7 +68,7 @@ export default {
     profile: "പ്രൊഫൈൽ",
     patientList: "രോഗികളുടെ പട്ടിക",
   },
-  authScreen:{
+  authScreen: {
     login: "ലോഗിൻ",
     signup: "സൈൻ അപ്പ്",
     email: "ഇമെയിൽ",

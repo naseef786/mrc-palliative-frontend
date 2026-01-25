@@ -2,19 +2,23 @@ import {
     createPatientApi,
     deletePatientApi,
     getPatientsApi,
+    searchPatientsApi,
     updatePatientApi,
 } from "@/api/patient.api";
 import { queryClient } from "@/lib/queryClient";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const usePatients = () =>
+// =============== Fetch patients (paginated) ===============
+export const usePatients = (searchQuery = "") =>
     useInfiniteQuery({
-        queryKey: ["patients"],
+        queryKey: ["patients", searchQuery],
         initialPageParam: 1,
-        queryFn: ({ pageParam }) => getPatientsApi(pageParam, 10),
+        queryFn: ({ pageParam = 1 }) =>
+            searchQuery ? searchPatientsApi(searchQuery, pageParam, 10) : getPatientsApi(pageParam, 10),
         getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     });
 
+// =============== Create patient ===============
 export const useCreatePatient = () => {
     const qc = useQueryClient();
     return useMutation({
@@ -23,19 +27,19 @@ export const useCreatePatient = () => {
     });
 };
 
+// =============== Update patient ===============
 export const useUpdatePatient = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) =>
-            updatePatientApi(id, data),
+        mutationFn: ({ id, data }: { id: string; data: any }) => updatePatientApi(id, data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["patients"] }),
     });
 };
 
+// =============== Delete patient with optimistic update ===============
 export const useDeletePatient = () =>
     useMutation({
         mutationFn: deletePatientApi,
-
         onMutate: async (id: string) => {
             await queryClient.cancelQueries({ queryKey: ["patients"] });
 
@@ -55,13 +59,11 @@ export const useDeletePatient = () =>
 
             return { previousData };
         },
-
         onError: (_, __, context) => {
             if (context?.previousData) {
                 queryClient.setQueryData(["patients"], context.previousData);
             }
         },
-
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["patients"] });
         },

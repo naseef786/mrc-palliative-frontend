@@ -48,7 +48,7 @@ function BottomTabs() {
                 }}
             />
 
-            {role === "admin" && (
+            {/* {role === "admin" && ( */}
                 <Tab.Screen
                     name="Schedules"
                     component={Schedules}
@@ -56,7 +56,7 @@ function BottomTabs() {
                         tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
                     }}
                 />
-            )}
+            {/* )} */}
 
 
             {role === "admin" && (
@@ -123,7 +123,7 @@ function CustomDrawerContent({ navigation }: any) {
             <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: theme.colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <Text style={{ color: theme.colors.text, marginBottom: 8 }}>Dark Mode</Text>
                 <Switch
-                    value={mode === "dark"}
+                    value={mode === "dark" || mode === "system"}
                     onValueChange={(val) => setMode(val ? "dark" : "light")}
                     thumbColor={mode === "dark" ? "#fff" : "#fff"}
                     trackColor={{ true: "#007AFF", false: "#ccc" }}

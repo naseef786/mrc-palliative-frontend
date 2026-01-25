@@ -5,6 +5,7 @@ import { useLanguageStore } from "@/store/language.store";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppThemeProvider } from "../theme/ThemeProvider";
 
@@ -19,9 +20,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppThemeProvider>
+
         <SafeAreaProvider>
           <SafeAreaView style={{ flex: 1, backgroundColor: 'black' }}>
-            <Stack screenOptions={{ headerShown: false }} />
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </GestureHandlerRootView>
           </SafeAreaView>
         </SafeAreaProvider>
       </AppThemeProvider>

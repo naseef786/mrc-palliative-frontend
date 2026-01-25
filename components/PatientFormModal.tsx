@@ -1,14 +1,14 @@
 import { useCreatePatient, useUpdatePatient } from "@/hooks/usePatients";
+import { UI } from "@/ui/styles";
 import { useTheme } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Modal,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 
 interface Props {
@@ -87,9 +87,9 @@ export function PatientFormModal({ visible, onClose, editing }: Props) {
 
     return (
         <Modal visible={visible} transparent animationType="slide">
-            <View style={styles.overlay}>
-                <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                    <Text style={[styles.title, { color: theme.colors.text }]}>
+            <View style={UI.overlay}>
+                <View style={[UI.card, { backgroundColor: theme.colors.card }]}>
+                    <Text style={[UI.title, { color: theme.colors.text }]}>
                         {editing ? "Update Patient" : "Add Patient"}
                     </Text>
 
@@ -103,7 +103,7 @@ export function PatientFormModal({ visible, onClose, editing }: Props) {
                                         setForm((p) => ({ ...p, [key]: v }))
                                     }
                                     style={[
-                                        styles.input,
+                                        UI.input,
                                         {
                                             borderColor: errors[key]
                                                 ? "#F44336"
@@ -113,22 +113,22 @@ export function PatientFormModal({ visible, onClose, editing }: Props) {
                                     ]}
                                 />
                                 {errors[key] && (
-                                    <Text style={styles.error}>{errors[key]}</Text>
+                                    <Text style={UI.error}>{errors[key]}</Text>
                                 )}
                             </View>
                         )
                     )}
 
-                    <View style={styles.actions}>
+                    <View style={UI.actions}>
                         <TouchableOpacity onPress={onClose}>
-                            <Text style={styles.cancel}>Cancel</Text>
+                            <Text style={UI.cancel}>Cancel</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={submit} disabled={loading}>
                             {loading ? (
                                 <ActivityIndicator />
                             ) : (
-                                <Text style={styles.save}>
+                                <Text style={UI.save}>
                                     {editing ? "Update" : "Create"}
                                 </Text>
                             )}
@@ -140,33 +140,4 @@ export function PatientFormModal({ visible, onClose, editing }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        justifyContent: "center",
-        padding: 16,
-    },
-    card: {
-        borderRadius: 20,
-        padding: 20,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: "700",
-        marginBottom: 16,
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 10,
-    },
-    error: { color: "#F44336", fontSize: 12 },
-    actions: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 16,
-    },
-    cancel: { color: "#999", fontSize: 16 },
-    save: { color: "#2196F3", fontSize: 16, fontWeight: "600" },
-});
+

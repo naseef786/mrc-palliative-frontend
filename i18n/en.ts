@@ -48,7 +48,7 @@ export default {
   },
   status: {
     pending: "Pending",
-    inProgress: "In Progress",
+    "in-progress": "In Progress",
     completed: "Completed",
     expired: "Expired",
   },

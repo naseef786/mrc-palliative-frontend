@@ -1,250 +1,189 @@
-import { getVolunteersApi, Volunteer } from "@/api/volunteer.api";
+import { Volunteer } from "@/api/volunteer.api";
+import Card from "@/components/Card";
+import VolunteerFormModal from "@/components/VolunteersList/VolunteerFormModal";
+import { useDeleteVolunteer, useVolunteers } from "@/hooks/useVolunteers";
+import { UI } from "@/ui/styles";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useTheme } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
-    LayoutAnimation,
-    Platform,
     Pressable,
-    StyleSheet,
+    RefreshControl,
     Text,
     TextInput,
     TouchableOpacity,
-    UIManager,
     View,
 } from "react-native";
-
-if (Platform.OS === "android") {
-    UIManager.setLayoutAnimationEnabledExperimental?.(true);
-}
-
-const LIMIT = 10;
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function VolunteersList() {
     const theme = useTheme();
-
-    const [data, setData] = useState<Volunteer[]>([]);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editing, setEditing] = useState<Volunteer | null>(null);
+    const deleteMutation = useDeleteVolunteer();
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isFetching,
+        isRefetching,
+        refetch,
+        status,
+    } = useVolunteers();
 
-    const fetchVolunteers = async (reset = false) => {
-        if (loading || (!hasMore && !reset)) return;
+    // Flatten paginated data
+    const volunteers = useMemo(() => data?.pages.flatMap((page) => page.data) || [], [data]);
 
-        setLoading(true);
-        try {
-            const res = await getVolunteersApi({
-                page: reset ? 1 : page,
-                limit: LIMIT,
-                search,
-            });
+    // BottomSheet ref and state
+    const sheetRef = useRef<BottomSheet>(null);
+    const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+    const snapPoints = useMemo(() => ["35%", "60%"], []);
 
-            setHasMore(res.pagination.hasMore);
-            setData((prev) => (reset ? res.data : [...prev, ...res.data]));
-            setPage((prev) => (reset ? 2 : prev + 1));
-        } catch (e) {
-            setHasMore(false);
-            console.error(e);
-        } finally {
-            setLoading(false);
+    const closeSheet = useCallback(() => setSelectedVolunteer(null), []);
+    const removeVolunteer = () => {
+        if (selectedVolunteer) {
+
+            deleteMutation.mutate(selectedVolunteer._id);
+            setSelectedVolunteer(null);
         }
+        sheetRef.current?.close();
     };
+    // Full-screen loading
+    if (status === "pending") {
+        return (
+            <View style={[UI.container, { justifyContent: "center", alignItems: "center" }]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+        );
+    }
 
-    useEffect(() => {
-        setHasMore(true);
-        fetchVolunteers(true);
-    }, [search]);
-
-    const toggleExpand = (id: string) => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setExpandedId((prev) => (prev === id ? null : id));
-    };
+    // Error fallback
+    if (status === "error") {
+        return (
+            <View style={[UI.container, { justifyContent: "center", alignItems: "center" }]}>
+                <Text style={{ color: theme.colors.text }}>Failed to load volunteers.</Text>
+                <TouchableOpacity onPress={() => refetch()}>
+                    <Text style={{ color: theme.colors.primary, marginTop: 8 }}>Retry</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            {/* 🔍 SEARCH */}
-            <TextInput
-                placeholder="Search volunteers..."
-                placeholderTextColor={theme.colors.text + "66"}
-                value={search}
-                onChangeText={setSearch}
-                style={[
-                    styles.search,
-                    {
-                        borderColor: theme.colors.border,
-                        color: theme.colors.text,
-                        backgroundColor: theme.colors.card,
-                    },
-                ]}
-            />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={[UI.container, { backgroundColor: theme.colors.background }]}>
+                <TextInput
+                    placeholder="Search volunteers..."
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholderTextColor={theme.colors.text + "99"}
+                    style={[UI.search, { color: theme.colors.text, borderColor: theme.colors.border }]}
+                    onSubmitEditing={() => refetch()}
+                />
 
-            {/* LIST */}
-            <FlatList
-                data={data}
-                keyExtractor={(item) => item._id}
-                contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
-                showsVerticalScrollIndicator={false}
-                onEndReached={() => fetchVolunteers()}
-                onEndReachedThreshold={0.4}
-                ListFooterComponent={
-                    loading ? <ActivityIndicator style={{ marginVertical: 20 }} /> : null
-                }
-                renderItem={({ item }) => {
-                    const expanded = expandedId === item._id;
+                <FlatList
+                    data={volunteers.filter((v) =>
+                        v.name.toLowerCase().includes(search.toLowerCase())
+                    )}
+                    keyExtractor={(i) => i._id}
+                    onEndReached={() => {
+                        if (hasNextPage) fetchNextPage();
+                    }}
+                    onEndReachedThreshold={0.4}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefetching}
+                            onRefresh={() => refetch()}
+                            colors={[theme.colors.primary]}
+                        />
+                    }
+                    ListEmptyComponent={
+                        !isFetching ? (
+                            <View style={{ padding: 32, alignItems: "center" }}>
+                                <Text style={{ color: theme.colors.text }}>No volunteers found.</Text>
+                            </View>
+                        ) : null
+                    }
+                    renderItem={({ item }) => (
+                        <Card>
+                            <Pressable onPress={() => setSelectedVolunteer(item)}>
+                                <Text style={[UI.title, { color: theme.colors.text }]}>{item.name}</Text>
+                                <Text style={{ color: theme.colors.text }}>{item.email}</Text>
+                            </Pressable>
+                        </Card>
+                    )}
+                    ListFooterComponent={
+                        isFetchingNextPage ? (
+                            <View style={{ padding: 16 }}>
+                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                            </View>
+                        ) : null
+                    }
+                />
 
-                    return (
-                        <Pressable
-                            onPress={() => toggleExpand(item._id)}
-                            style={[
-                                styles.card,
-                                {
-                                    backgroundColor: theme.colors.card,
-                                    borderColor: theme.colors.border,
-                                },
-                            ]}
-                        >
-                            {/* HEADER */}
-                            <View style={styles.header}>
-                                <View>
-                                    <Text style={[styles.name, { color: theme.colors.text }]}>
-                                        {item.name}
-                                    </Text>
-                                    <Text style={[styles.subText, { color: theme.colors.text }]}>
-                                        {item.email}
-                                    </Text>
-                                </View>
+                <TouchableOpacity
+                    style={[UI.fab, { backgroundColor: theme.colors.primary }]}
+                    onPress={() => {
+                        setEditing(null);
+                        setFormOpen(true);
+                    }}
+                >
+                    <Text style={{ color: "#fff", fontSize: 30 }}>＋</Text>
+                </TouchableOpacity>
 
-                                <View
-                                    style={[
-                                        styles.status,
-                                        { backgroundColor: theme.colors.primary + "22" },
-                                    ]}
+                <VolunteerFormModal
+                    visible={formOpen}
+                    volunteer={editing}
+                    onClose={() => setFormOpen(false)}
+                    onSuccess={() => refetch()}
+                />
+
+                {/* Bottom Sheet */}
+                <BottomSheet
+                    ref={sheetRef}
+                    index={selectedVolunteer !== null ? 0 : -1}
+                    snapPoints={snapPoints}
+                    enablePanDownToClose
+                    backgroundStyle={{ backgroundColor: theme.colors.card, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                    onClose={closeSheet}
+                >
+                    <BottomSheetView style={{ padding: 16 }}>
+                        <View style={{ padding: 16 }}>
+                            <Text style={[UI.title, { color: theme.colors.text }]}>{selectedVolunteer?.name}</Text>
+                            <Text style={{ color: theme.colors.text }}>{selectedVolunteer?.email}</Text>
+                            <Text style={{ color: theme.colors.text }}>{selectedVolunteer?.phone}</Text>
+                            <Text style={{ color: theme.colors.text }}>Total Services: {selectedVolunteer?.totalServices}</Text>
+
+                            <View style={{ marginTop: 20, flexDirection: "row", justifyContent: "space-between" }}>
+                                <TouchableOpacity
+                                    style={[UI.primaryBtn, { backgroundColor: theme.colors.primary, width: "45%" }]}
+                                    onPress={() => {
+                                        setEditing(selectedVolunteer);
+                                        setFormOpen(true);
+                                    }
+                                    }
                                 >
-                                    <Text
-                                        style={{
-                                            color: theme.colors.primary,
-                                            fontSize: 12,
-                                            fontWeight: "600",
-                                        }}
-                                    >
-                                        Volunteer
-                                    </Text>
-                                </View>
+                                    <Text style={UI.btnText}>Edit</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={[UI.dangerBtn, { width: "45%" }]} onPress={removeVolunteer}>
+                                    <Text style={UI.btnText}>Delete</Text>
+                                </TouchableOpacity>
                             </View>
 
-                            {/* EXPANDED */}
-                            {expanded && (
-                                <View style={styles.details}>
-                                    <InfoRow label="Phone" value={item.phone} theme={theme} />
-                                    <InfoRow label="Role" value={item.role} theme={theme} />
-                                </View>
-                            )}
-                        </Pressable>
-                    );
-                }}
-            />
-
-            {/* ➕ ADD VOLUNTEER BUTTON */}
-            <TouchableOpacity
-                style={[
-                    styles.fab,
-                    { backgroundColor: theme.colors.primary },
-                ]}
-                onPress={() => {
-                    console.log("Open Add Volunteer Modal");
-                }}
-            >
-                <Text style={styles.fabText}>＋</Text>
-            </TouchableOpacity>
-        </View>
+                            <TouchableOpacity onPress={() => {
+                                closeSheet();
+                            }} style={{ marginTop: 20 }}>
+                                <Text style={{ textAlign: "center", marginTop: 10 }}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </BottomSheetView>
+                </BottomSheet>
+            </View>
+        </GestureHandlerRootView >
     );
 }
-
-/* ---------- SMALL COMPONENT ---------- */
-
-function InfoRow({ label, value, theme }: any) {
-    return (
-        <View style={styles.infoRow}>
-            <Text style={{ color: theme.colors.text, opacity: 0.6 }}>{label}</Text>
-            <Text style={{ color: theme.colors.text }}>{value}</Text>
-        </View>
-    );
-}
-
-/* ---------- STYLES ---------- */
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-
-    search: {
-        margin: 16,
-        borderWidth: 1,
-        borderRadius: 14,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        fontSize: 15,
-    },
-
-    card: {
-        borderRadius: 18,
-        borderWidth: 1,
-        padding: 16,
-        marginBottom: 12,
-    },
-
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-
-    name: {
-        fontSize: 16,
-        fontWeight: "600",
-    },
-
-    subText: {
-        fontSize: 13,
-        opacity: 0.6,
-        marginTop: 2,
-    },
-
-    status: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-    },
-
-    details: {
-        marginTop: 14,
-        gap: 6,
-    },
-
-    infoRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-
-    fab: {
-        position: "absolute",
-        right: 20,
-        bottom: 30,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        alignItems: "center",
-        justifyContent: "center",
-        elevation: 4,
-    },
-
-    fabText: {
-        color: "#fff",
-        fontSize: 30,
-        lineHeight: 32,
-    },
-});

@@ -1,19 +1,20 @@
+import Card from "@/components/Card";
 import { PatientFormModal } from "@/components/PatientFormModal";
 import { PatientSkeleton } from "@/components/skeletons/PatientCardSkeleton";
 import {
   useDeletePatient,
   usePatients,
 } from "@/hooks/usePatients";
+import { UI } from "@/ui/styles";
 import { useTheme } from "@react-navigation/native";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export interface Patient {
@@ -45,7 +46,7 @@ export default function PatientList() {
   const patients = useMemo(() => {
     const all = data?.pages.flatMap((p) => p.data) ?? [];
     return all.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
+      p?.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [data, search]);
 
@@ -61,7 +62,7 @@ export default function PatientList() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={UI.container}>
         {[...Array(6)].map((_, i) => (
           <PatientSkeleton key={i} />
         ))}
@@ -70,10 +71,7 @@ export default function PatientList() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.header, { color: theme.colors.text }]}>
-        Patients
-      </Text>
+    <View style={[UI.container, { backgroundColor: theme.colors.background }]}>
 
       <TextInput
         placeholder="Search patients"
@@ -81,14 +79,10 @@ export default function PatientList() {
         onChangeText={setSearch}
         placeholderTextColor={theme.colors.text + "99"}
         style={[
-          styles.search,
+          UI.search,
           { color: theme.colors.text, borderColor: theme.colors.border },
         ]}
       />
-
-      <TouchableOpacity style={styles.addBtn} onPress={openCreate}>
-        <Text style={styles.addText}>+ Add Patient</Text>
-      </TouchableOpacity>
 
       <FlatList
         data={patients}
@@ -96,14 +90,16 @@ export default function PatientList() {
         onEndReached={() => hasNextPage && fetchNextPage()}
         onEndReachedThreshold={0.5}
         refreshing={isLoading}
-        onRefresh={() => refetch()}
+        onRefresh={() => {
+          refetch()
+        }}
         ListFooterComponent={
           isFetchingNextPage ? <ActivityIndicator /> : null
         }
         renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.name, { color: theme.colors.text }]}>
-              {item.name}
+          <Card >
+            <Text style={[UI.name, { color: theme.colors.text }]}>
+              {item?.name}
             </Text>
             <Text style={{ color: theme.colors.text }}>
               DOB: {item.dob}
@@ -112,17 +108,17 @@ export default function PatientList() {
               Contact: {item.emergencyContact}
             </Text>
 
-            <View style={styles.row}>
+            <View style={UI.row}>
               <TouchableOpacity onPress={() => openEdit(item)}>
-                <Text style={styles.edit}>Edit</Text>
+                <Text style={UI.edit}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => deleteMutation.mutate(item._id)}
               >
-                <Text style={styles.delete}>Delete</Text>
+                <Text style={UI.delete}>Delete</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Card>
         )}
       />
 
@@ -132,39 +128,13 @@ export default function PatientList() {
         editing={editing}
         onClose={() => setModalVisible(false)}
       />
+      <TouchableOpacity
+        style={[UI.fab, { backgroundColor: theme.colors.primary }]}
+        onPress={openCreate}
+      >
+        <Text style={{ color: "#fff", fontSize: 30 }}>＋</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  center: { flex: 1, justifyContent: "center" },
-  header: { fontSize: 22, fontWeight: "700", marginBottom: 12 },
-  search: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  addBtn: {
-    backgroundColor: "#2196F3",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 12,
-    alignItems: "center",
-  },
-  addText: { color: "#fff", fontWeight: "600" },
-  card: {
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  name: { fontSize: 16, fontWeight: "700" },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  edit: { color: "#2196F3" },
-  delete: { color: "#F44336" },
-});
