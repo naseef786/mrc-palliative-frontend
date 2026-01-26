@@ -10,8 +10,6 @@ api.interceptors.request.use(
   (config) => {
     // ✅ READ FROM ZUSTAND DIRECTLY
     const token = useAuthStore.getState().token;
-    console.log(token, ":Auth Token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,6 +22,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log(error);
+
     if (error.response?.status === 401) {
       console.log("Unauthorized – token invalid or expired");
 

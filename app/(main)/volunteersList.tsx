@@ -11,6 +11,7 @@ import {
     FlatList,
     Pressable,
     RefreshControl,
+    ScrollView,
     Text,
     TextInput,
     TouchableOpacity,
@@ -41,17 +42,17 @@ export default function VolunteersList() {
     // BottomSheet ref and state
     const sheetRef = useRef<BottomSheet>(null);
     const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
-    const snapPoints = useMemo(() => ["35%", "60%"], []);
+    const snapPoints = useMemo(() => ["35%", "70%"], []);
 
     const closeSheet = useCallback(() => setSelectedVolunteer(null), []);
     const removeVolunteer = () => {
         if (selectedVolunteer) {
-
             deleteMutation.mutate(selectedVolunteer._id);
             setSelectedVolunteer(null);
         }
         sheetRef.current?.close();
     };
+
     // Full-screen loading
     if (status === "pending") {
         return (
@@ -125,6 +126,7 @@ export default function VolunteersList() {
                     }
                 />
 
+                {/* Floating Add Button */}
                 <TouchableOpacity
                     style={[UI.fab, { backgroundColor: theme.colors.primary }]}
                     onPress={() => {
@@ -135,6 +137,7 @@ export default function VolunteersList() {
                     <Text style={{ color: "#fff", fontSize: 30 }}>＋</Text>
                 </TouchableOpacity>
 
+                {/* Volunteer Form Modal */}
                 <VolunteerFormModal
                     visible={formOpen}
                     volunteer={editing}
@@ -152,38 +155,67 @@ export default function VolunteersList() {
                     onClose={closeSheet}
                 >
                     <BottomSheetView style={{ padding: 16 }}>
-                        <View style={{ padding: 16 }}>
-                            <Text style={[UI.title, { color: theme.colors.text }]}>{selectedVolunteer?.name}</Text>
-                            <Text style={{ color: theme.colors.text }}>{selectedVolunteer?.email}</Text>
-                            <Text style={{ color: theme.colors.text }}>{selectedVolunteer?.phone}</Text>
-                            <Text style={{ color: theme.colors.text }}>Total Services: {selectedVolunteer?.totalServices}</Text>
+                        <ScrollView>
+                            {selectedVolunteer && (
+                                <>
+                                    <Text style={[UI.title, { color: theme.colors.text, marginBottom: 8 }]}>
+                                        {selectedVolunteer.name}
+                                    </Text>
 
-                            <View style={{ marginTop: 20, flexDirection: "row", justifyContent: "space-between" }}>
-                                <TouchableOpacity
-                                    style={[UI.primaryBtn, { backgroundColor: theme.colors.primary, width: "45%" }]}
-                                    onPress={() => {
-                                        setEditing(selectedVolunteer);
-                                        setFormOpen(true);
-                                    }
-                                    }
-                                >
-                                    <Text style={UI.btnText}>Edit</Text>
-                                </TouchableOpacity>
+                                    {/* List all properties */}
+                                    <View style={{ marginBottom: 8 }}>
+                                        <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Email:</Text>
+                                        <Text style={{ color: theme.colors.text }}>{selectedVolunteer.email}</Text>
+                                    </View>
 
-                                <TouchableOpacity style={[UI.dangerBtn, { width: "45%" }]} onPress={removeVolunteer}>
-                                    <Text style={UI.btnText}>Delete</Text>
-                                </TouchableOpacity>
-                            </View>
+                                    <View style={{ marginBottom: 8 }}>
+                                        <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Phone:</Text>
+                                        <Text style={{ color: theme.colors.text }}>{selectedVolunteer.phone}</Text>
+                                    </View>
 
-                            <TouchableOpacity onPress={() => {
-                                closeSheet();
-                            }} style={{ marginTop: 20 }}>
-                                <Text style={{ textAlign: "center", marginTop: 10 }}>Close</Text>
-                            </TouchableOpacity>
-                        </View>
+                                    <View style={{ marginBottom: 8 }}>
+                                        <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Total Services:</Text>
+                                        <Text style={{ color: theme.colors.text }}>{selectedVolunteer.totalServices}</Text>
+                                    </View>
+
+                                    <View style={{ marginBottom: 8 }}>
+                                        <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Address:</Text>
+                                        <Text style={{ color: theme.colors.text }}>{selectedVolunteer.address}</Text>
+                                    </View>
+
+                                    {/* <View style={{ marginBottom: 8 }}>
+                                        <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Notes:</Text>
+                                        <Text style={{ color: theme.colors.text }}>{selectedVolunteer?.notes}</Text>
+                                    </View> */}
+
+                                    <View style={{ marginTop: 20, flexDirection: "row", justifyContent: "space-between" }}>
+                                        <TouchableOpacity
+                                            style={[UI.primaryBtn, { backgroundColor: theme.colors.primary, width: "45%" }]}
+                                            onPress={() => {
+                                                setEditing(selectedVolunteer);
+                                                setFormOpen(true);
+                                            }}
+                                        >
+                                            <Text style={UI.btnText}>Edit</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity style={[UI.dangerBtn, { width: "45%" }]} onPress={removeVolunteer}>
+                                            <Text style={UI.btnText}>Delete</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        onPress={() => closeSheet()}
+                                        style={{ marginTop: 20 }}
+                                    >
+                                        <Text style={{ textAlign: "center", marginTop: 10 }}>Close</Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </ScrollView>
                     </BottomSheetView>
                 </BottomSheet>
             </View>
-        </GestureHandlerRootView >
+        </GestureHandlerRootView>
     );
 }
