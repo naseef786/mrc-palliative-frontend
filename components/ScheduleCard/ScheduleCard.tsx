@@ -5,9 +5,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   item: Schedule;
-  role: "admin" | "volunteer";
-  onEdit: () => void;
-  onDelete: () => void;
+  role?: "admin" | "volunteer";
+  onEdit?: () => void;
+  onDelete?: () => void;
   onAssign?: () => void;
   onUnassign?: () => void;
   onPress?: () => void;
@@ -31,6 +31,7 @@ export function ScheduleCard({
 }: Props) {
   const theme = useTheme();
   const t = useTranslation();
+  console.log(item);
 
   const statusColor = STATUS_COLORS[item.status];
 
@@ -82,7 +83,10 @@ export function ScheduleCard({
       )}
 
       {/* Divider */}
-      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+      {
+        item.status !== "expired" && item?.status !== "completed" && role !== "admin" &&
+        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+      }
 
       {/* Actions */}
       <View style={styles.actions}>
@@ -102,7 +106,7 @@ export function ScheduleCard({
           </>
         )}
 
-        {role === "volunteer" && !item.assignedVolunteer && onAssign && (
+        {role === "volunteer" && !item.assignedVolunteer && item.status !== "expired" && item?.status !== "completed" && onAssign && (
           <TouchableOpacity onPress={onAssign}>
             <Text style={[styles.actionText, { color: theme.colors.primary }]}>
               {t("common.assign")}
@@ -110,7 +114,7 @@ export function ScheduleCard({
           </TouchableOpacity>
         )}
 
-        {role === "volunteer" && item.assignedVolunteer && onUnassign && (
+        {role === "volunteer" && item.assignedVolunteer && item.status !== "expired" && item?.status !== "completed" && onUnassign && (
           <TouchableOpacity onPress={onUnassign}>
             <Text style={[styles.actionText, { color: "#F59E0B" }]}>
               {t("common.unassign")}

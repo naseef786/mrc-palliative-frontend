@@ -19,7 +19,7 @@ export default function Login() {
     mutationFn: loginApi,
     onSuccess: (data) => {
       login(data.token, data.user.role, data.user);
-      router.replace("/(main)/home");
+      router.replace("/(main)/analytics");
     },
   });
   console.log(error?.message);

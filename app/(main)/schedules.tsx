@@ -1,5 +1,5 @@
 import { useTheme } from "@react-navigation/native";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -10,9 +10,8 @@ import {
     View
 } from "react-native";
 
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-
-import { ScheduleCard } from "@/components/ScheduleCard";
+import ReusableBottomSheet from "@/components/BottomSheet";
+import { ScheduleCard } from "@/components/ScheduleCard/ScheduleCard";
 import { ScheduleFormModal } from "@/components/ScheduleFormModal";
 
 import {
@@ -27,15 +26,14 @@ import { useScheduleStore } from "@/store/shedule.store";
 export default function Schedules() {
     const theme = useTheme();
     const role = useAuthStore((s) => s.role);
-    const volunteerId = useAuthStore((s) => s.user?._id);
-
     const { setSchedules, deleteSchedule: deleteLocal, startEdit, clearEdit, editing } =
         useScheduleStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [formOpen, setFormOpen] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
 
-    /* ================= FETCH INFINITE SCHEDULES ================= */
+    /* ================= FETCH SCHEDULES ================= */
     const {
         data,
         fetchNextPage,
@@ -46,10 +44,7 @@ export default function Schedules() {
         refetch,
     } = useSchedulesQueryInfinite(searchQuery);
 
-    const schedules = useMemo(
-        () => data?.pages.flatMap((p: any) => p.data) ?? [],
-        [data]
-    );
+    const schedules = useMemo(() => data?.pages.flatMap((p: any) => p.data) ?? [], [data]);
 
     /* ================= MUTATIONS ================= */
     const deleteMutation = useDeleteScheduleMutation({
@@ -58,11 +53,7 @@ export default function Schedules() {
     const assignMutation = useAssignSchedule();
     const unassignMutation = useUnassignSchedule();
 
-    /* ================= BOTTOM SHEET ================= */
-    const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ["80%", "70%"], []);
-    const [selectedSchedule, setSelectedSchedule] = useState<any | null>(null);
-
+    /* ================= HANDLERS ================= */
     const openSheet = (schedule: any) => setSelectedSchedule(schedule);
     const closeSheet = useCallback(() => setSelectedSchedule(null), []);
 
@@ -71,14 +62,13 @@ export default function Schedules() {
             deleteMutation.mutate(selectedSchedule._id);
             setSelectedSchedule(null);
         }
-        sheetRef.current?.close();
     };
 
     const editSchedule = () => {
         if (selectedSchedule) {
             startEdit(selectedSchedule);
             setFormOpen(true);
-            sheetRef.current?.close();
+            setSelectedSchedule(null);
         }
     };
 
@@ -121,32 +111,24 @@ export default function Schedules() {
                         <ScheduleCard
                             item={item}
                             role={role as any}
-                            onEdit={() => {
-                                startEdit(item);
-                                setFormOpen(true);
-                            }}
+                            onEdit={() => { startEdit(item); setFormOpen(true); }}
                             onDelete={() => deleteMutation.mutate(item?._id)}
                             onAssign={() => assignMutation.mutate(item?._id)}
                             onUnassign={() => unassignMutation.mutate(item?._id)}
-                            onPress={() => openSheet(item)} // Open bottom sheet on press
+                            onPress={() => openSheet(item)}
                         />
                     )}
                     contentContainerStyle={{ paddingBottom: 100 }}
                     ListFooterComponent={() =>
-                        isFetchingNextPage ? (
-                            <ActivityIndicator size="small" color={theme.colors.primary} />
-                        ) : null
+                        isFetchingNextPage ? <ActivityIndicator size="small" color={theme.colors.primary} /> : null
                     }
                 />
             )}
 
-            {/* FLOAT BUTTON FOR ADMIN */}
+            {/* FLOAT BUTTON */}
             {role === "admin" && (
                 <TouchableOpacity
-                    onPress={() => {
-                        clearEdit();
-                        setFormOpen(true);
-                    }}
+                    onPress={() => { clearEdit(); setFormOpen(true); }}
                     style={{
                         position: "absolute",
                         right: 24,
@@ -167,80 +149,45 @@ export default function Schedules() {
                 onClose={() => setFormOpen(false)}
             />
 
-            {/* BOTTOM SHEET */}
-            <BottomSheet
-                ref={sheetRef}
-                index={selectedSchedule ? 0 : -1}
-                snapPoints={snapPoints}
-                enablePanDownToClose
-                backgroundStyle={{
-                    backgroundColor: theme.colors.card,
-                    borderTopLeftRadius: 16,
-                    borderTopRightRadius: 16,
-                }}
-                onClose={closeSheet}
-            >
-                <BottomSheetView style={{ padding: 16 }}>
-                    {selectedSchedule && (
-                        <>
-                            <Text style={{ fontSize: 20, fontWeight: "700", color: theme.colors.text }}>
-                                Schedule Details
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 8 }}>
-                                Info: {selectedSchedule.info || "-"}
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 4 }}>
-                                Remarks: {selectedSchedule.remarks || "-"}
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 4 }}>
-                                Message: {selectedSchedule.message || "-"}
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 4 }}>
-                                Status: {selectedSchedule.status}
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 4 }}>
-                                Assigned Volunteer: {selectedSchedule.assignedVolunteer?.name || "Not assigned"}
-                            </Text>
-                            <Text style={{ color: theme.colors.text, marginTop: 4 }}>
-                                Date: {new Date(selectedSchedule.date).toLocaleString()}
-                            </Text>
+            {/* REUSABLE BOTTOM SHEET */}
+            {selectedSchedule && (
+                <ReusableBottomSheet
+                    title="Schedule Details"
+                    isVisible={!!selectedSchedule}
+                    onClose={closeSheet}
+                    content={
+                        <View>
+                            <View style={{ borderColor: theme?.colors?.primary, borderWidth: 1, padding: 10, borderRadius: 20, marginTop: 10 }}>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>Info: {selectedSchedule.info || "Not Available"}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>Remarks: {selectedSchedule.remarks || "Not Available"}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>Message: {selectedSchedule.message || "Not Available"}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>Status: {selectedSchedule.status}</Text>
 
-                            {/* ACTION BUTTONS */}
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
-                                <TouchableOpacity
-                                    style={{
-                                        backgroundColor: theme.colors.primary,
-                                        padding: 12,
-                                        borderRadius: 8,
-                                        width: "48%",
-                                    }}
-                                    onPress={editSchedule}
-                                >
-                                    <Text style={{ color: "#fff", textAlign: "center" }}>Edit</Text>
-                                </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={{
-                                        backgroundColor: "red",
-                                        padding: 12,
-                                        borderRadius: 8,
-                                        width: "48%",
-                                    }}
-                                    onPress={removeSchedule}
-                                >
-                                    <Text style={{ color: "#fff", textAlign: "center" }}>Delete</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <TouchableOpacity onPress={closeSheet} style={{ marginTop: 16 }}>
-                                <Text style={{ textAlign: "center", marginTop: 8, color: theme.colors.primary }}>
-                                    Close
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>
+                                    Assigned Volunteer: {selectedSchedule.assignedVolunteer?.name || "Not assigned"}
                                 </Text>
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </BottomSheetView>
-            </BottomSheet>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>
+                                    Assigned Date: {new Date(selectedSchedule.date).toLocaleString()}
+                                </Text>
+                            </View>
+                            <View style={{ borderColor: theme?.colors?.primary, borderWidth: 1, padding: 10, borderRadius: 20, marginTop: 10 }}>
+                                <Text style={{ color: theme.colors.text, marginTop: 0, fontWeight: 600 }}>Patient Details: </Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>Name: {selectedSchedule.patient?.name}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>age: {selectedSchedule.patient?.age}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>gender: {selectedSchedule.patient?.gender}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>phone: {selectedSchedule.patient?.phone}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>address: {selectedSchedule.patient?.address}</Text>
+                                <Text style={{ color: theme.colors.text, marginTop: 4 }}>bloodGroup: {selectedSchedule.patient?.bloodGroup}</Text>
+                            </View>
+                        </View>
+                    }
+                    actions={role === "admin" ? [
+                        { label: "Edit", onPress: editSchedule, type: "primary" },
+                        { label: "Delete", onPress: removeSchedule, type: "danger" },
+                    ] : undefined}
+                />
+            )}
         </View>
     );
 }

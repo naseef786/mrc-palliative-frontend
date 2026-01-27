@@ -11,6 +11,8 @@ export interface Volunteer {
     address?: string;
     emergencyContact?: string;
     totalServices?: number;
+    createdAt?:any;
+    updatedAt?:any;
 }
 
 export interface VolunteerResponse {

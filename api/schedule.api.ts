@@ -23,8 +23,6 @@ export const createScheduleApi = async (data: any) => {
 };
 
 export const updateScheduleApi = async ({ id, data }: any) => {
-  console.log(data, ">>>>>>>>>>>>>>>>>>>>");
-
   const res = await api.put(`/schedules/${id}`, data);
   return res.data;
 };
@@ -34,8 +32,6 @@ export const deleteScheduleApi = async (id: string) => {
 };
 
 export const assignSelfApi = async (id: string) => {
-  console.log(id, "{{{{{{{{{{{{{{{{");
-
   const res = await api.post(`/schedules/${id}/assign`);
   return res.data;
 };

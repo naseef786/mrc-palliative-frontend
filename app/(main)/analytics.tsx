@@ -26,8 +26,8 @@ export default function AnalyticsScreen() {
 
   const chartWidth = 360;
 
-  const statusLabels = useMemo(() => Object.keys(analytics?.schedulesByStatus || {}), [analytics]);
-  const statusCounts = useMemo(() => Object.values(analytics?.schedulesByStatus || {}), [analytics]);
+  const statusLabels = useMemo(() => Object.keys(analytics?.scheduleCounts || {}), [analytics]);
+  const statusCounts = useMemo(() => Object.values(analytics?.scheduleCounts || {}), [analytics]);
 
   return (
     <ScrollView
@@ -44,48 +44,52 @@ export default function AnalyticsScreen() {
 
       <View style={styles.cardRow}>
         <StatCard title="Schedules" value={analytics?.cards.totalSchedules ?? 0} theme={theme} />
-        <StatCard title="Completed" value={analytics?.cards.completedSchedules ?? 0} theme={theme} />
+        <StatCard title="Staffs" value={analytics?.cards.totalStaffs ?? 0} theme={theme} />
       </View>
+
+      <Text style={[styles.title, { color: theme.colors.text }]}>Schedule Overview</Text>
+      <View style={styles.cardRow}>
+        <StatCard title="Completed" value={analytics?.scheduleCounts?.completed ?? 0} theme={theme} />
+        <StatCard title="In-Progress" value={analytics?.scheduleCounts.inProgress ?? 0} theme={theme} />
+      </View>
+
+      <View style={styles.cardRow}>
+        <StatCard title="Pending" value={analytics?.scheduleCounts.pending ?? 0} theme={theme} />
+        <StatCard title="Expired" value={analytics?.scheduleCounts.expired ?? 0} theme={theme} />
+      </View>
+
       {/* Month/Year Picker */}
       <View style={{ flexDirection: "row", marginBottom: 16 }}>
         <Picker
+          mode="dropdown"
           selectedValue={selectedMonth}
           onValueChange={(month) => setMonthYear(month, selectedYear)}
-          style={{ flex: 1, color: theme.colors.text }}
+          dropdownIconRippleColor={theme?.colors?.primary}
+          style={{ flex: 1, color: theme.colors.text, backgroundColor: theme?.colors?.card, borderRadius: 30 }}
+          selectionColor={theme?.colors?.primary}
+          dropdownIconColor={theme?.colors?.primary}
+          itemStyle={{ backgroundColor: theme?.colors?.primary, borderRadius: 30 }}
         >
           {months.map((m, idx) => (
-            <Picker.Item key={idx} label={m} value={idx + 1} />
+            <Picker.Item style={{ backgroundColor: theme?.colors?.card, color: theme?.colors?.text, textAlign: 'center', width: '100%', borderBottomColor: theme?.colors?.primary, borderBottomWidth: 2 }} key={idx} label={m} value={idx + 1} />
           ))}
         </Picker>
 
         <Picker
+          mode="dropdown"
           selectedValue={selectedYear}
           onValueChange={(year) => setMonthYear(selectedMonth, year)}
-          style={{ flex: 1, color: theme.colors.text }}
+          dropdownIconRippleColor={theme?.colors?.primary}
+          style={{ flex: 1, color: theme.colors.text, backgroundColor: theme?.colors?.card, borderRadius: 30 }}
+          selectionColor={theme?.colors?.primary}
+          dropdownIconColor={theme?.colors?.primary}
+          itemStyle={{ backgroundColor: theme?.colors?.primary, borderRadius: 30 }}
         >
           {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y) => (
             <Picker.Item key={y} label={y.toString()} value={y} />
           ))}
         </Picker>
       </View>
-
-      {/* Summary Cards */}
-      <View style={styles.cardRow}>
-        <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
-          <Text style={{ color: theme.colors.text }}>Total Patients</Text>
-          <Text style={{ color: theme.colors.primary, fontSize: 22, fontWeight: "700" }}>
-            {analytics?.cards.totalPatients ?? "-"}
-          </Text>
-        </View>
-
-        <View style={[styles.statCard, { backgroundColor: theme.colors.card }]}>
-          <Text style={{ color: theme.colors.text }}>Completed Tasks</Text>
-          <Text style={{ color: theme.colors.primary, fontSize: 22, fontWeight: "700" }}>
-            {analytics?.cards.completedSchedules ?? "-"}
-          </Text>
-        </View>
-      </View>
-
       {/* Status Bar Chart */}
       <BarChart
         data={{ labels: statusLabels, datasets: [{ data: statusCounts }] }}

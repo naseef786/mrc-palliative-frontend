@@ -1,5 +1,5 @@
 import { View, Button } from "react-native";
-import { useThemeStore } from "../store/theme.store";
+import { useThemeStore } from "../../store/theme.store";
 
 export default function ThemeToggle() {
   const { setMode } = useThemeStore();

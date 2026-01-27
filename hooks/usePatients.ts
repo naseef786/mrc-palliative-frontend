@@ -6,7 +6,7 @@ import {
     updatePatientApi,
 } from "@/api/patient.api";
 import { queryClient } from "@/lib/queryClient";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 
 // =============== Fetch patients (paginated) ===============
 export const usePatients = (searchQuery = "") =>
@@ -20,19 +20,19 @@ export const usePatients = (searchQuery = "") =>
 
 // =============== Create patient ===============
 export const useCreatePatient = () => {
-    const qc = useQueryClient();
+
     return useMutation({
         mutationFn: createPatientApi,
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["patients"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["patients"] }),
     });
 };
 
 // =============== Update patient ===============
 export const useUpdatePatient = () => {
-    const qc = useQueryClient();
+
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: any }) => updatePatientApi(id, data),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["patients"] }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["patients"] }),
     });
 };
 

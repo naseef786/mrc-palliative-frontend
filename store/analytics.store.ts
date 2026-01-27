@@ -1,17 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createAsyncStorage } from "@/utils/asyncStorageWrapper";
+import { AnalyticsResponse } from "@/api/analytics.api";
 
-export interface AnalyticsResponse {
-  cards: {
-    totalPatients: number;
-    totalVolunteers: number;
-    totalSchedules: number;
-    completedSchedules: number;
-  };
-  schedulesByStatus: Record<string, number>;
-  schedulesByMonth: { year: number; month: number; count: number }[];
-}
+
 
 interface AnalyticsState {
   selectedMonth: number;

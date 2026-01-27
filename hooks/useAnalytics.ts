@@ -1,5 +1,5 @@
-import { getAnalyticsApi } from '@/api/analytics.api';
-import { AnalyticsResponse, useAnalyticsStore } from '@/store/analytics.store';
+import { AnalyticsResponse, getAnalyticsApi } from '@/api/analytics.api';
+import { useAnalyticsStore } from '@/store/analytics.store';
 import { useQuery } from '@tanstack/react-query';
 
 export const useAnalytics = () => {
