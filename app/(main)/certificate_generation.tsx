@@ -1,5 +1,5 @@
-import Certificate from "@/components/certificate-generation/Certificate";
-import DonationForm from "@/components/certificate-generation/DonationForm";
+import Certificate from "@/components/CertificateGenerator/Certificate";
+import DonationForm from "@/components/CertificateGenerator/DonationForm";
 import * as FileSystem from "expo-file-system/legacy"; // legacy API
 import * as Sharing from "expo-sharing";
 import React, { useRef, useState } from "react";
@@ -82,8 +82,8 @@ const CertificationGeneration: React.FC = () => {
                         donorName={donationData.donorName}
                         amount={donationData.amount}
                         date={donationData.date}
-                        logo={require("../../assets/images/react-logo.png")}
-                        signature={require("../../assets/images/react-logo.png")}
+                        logo={require("../../assets/images/icon.png")}
+                        signature={require("../../assets/images/icon.png")}
                     />
                 </Animated.View>
             )}
@@ -99,8 +99,8 @@ const CertificationGeneration: React.FC = () => {
                         donorName={donationData.donorName}
                         amount={donationData.amount}
                         date={donationData.date}
-                        logo={require("../../assets/images/react-logo.png")}
-                        signature={require("../../assets/images/react-logo.png")}
+                        logo={require("../../assets/images/icon.png")}
+                        signature={require("../../assets/images/icon.png")}
                     />
                 </Animated.View>
             )}

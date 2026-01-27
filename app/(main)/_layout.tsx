@@ -6,17 +6,17 @@ import { router } from "expo-router";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 import { useAuthStore } from "../../store/auth.store";
 // Screens
-import AppStatusBar from "@/components/AppStatusBar";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import AppStatusBar from "@/components/AppStatusBar/AppStatusBar";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { useThemeStore } from "@/store/theme.store";
+import Analytics from "./analytics";
+import AssignedSchedules from "./assignedSchedules";
 import CertificationGeneration from "./certificate_generation";
 import Help from "./help";
-import Home from "./home";
-import PatientList from "./patientList";
+import PatientList from "./patients";
 import Schedules from "./schedules";
 import SettingScreen from "./settings";
-import Tasks from "./tasks";
-import VolunteersList from "./volunteersList";
+import VolunteersList from "./volunteers";
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
@@ -41,22 +41,22 @@ function BottomTabs() {
             }}
         >
             <Tab.Screen
-                name="Home"
-                component={Home}
+                name="Analytics"
+                component={Analytics}
                 options={{
-                    tabBarIcon: ({ color, size }) => <MaterialIcons name="home" size={size} color={color} />,
+                    tabBarIcon: ({ color, size }) => <MaterialIcons name="analytics" size={size} color={color} />,
                 }}
             />
 
-            {role === "admin" && (
-                <Tab.Screen
-                    name="Schedules"
-                    component={Schedules}
-                    options={{
-                        tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
-                    }}
-                />
-            )}
+            {/* {role === "admin" && ( */}
+            <Tab.Screen
+                name="Schedules"
+                component={Schedules}
+                options={{
+                    tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+                }}
+            />
+            {/* )} */}
 
 
             {role === "admin" && (
@@ -79,8 +79,8 @@ function BottomTabs() {
             )}
             {role === "volunteer" && (
                 <Tab.Screen
-                    name="Tasks"
-                    component={Tasks}
+                    name="Assigned Schedules"
+                    component={AssignedSchedules}
                     options={{
                         tabBarIcon: ({ color, size }) => <Ionicons name="checkmark-done-outline" size={size} color={color} />,
                     }}
@@ -99,9 +99,9 @@ function CustomDrawerContent({ navigation }: any) {
         <DrawerContentScrollView style={{ backgroundColor: theme.colors.background }}>
             <AppStatusBar />
             <DrawerItem
-                label="Home"
+                label="Analytics"
                 labelStyle={{ color: theme.colors.text }}
-                onPress={() => navigation.navigate("Tabs", { screen: "Home" })}
+                onPress={() => navigation.navigate("Tabs", { screen: "Analytics" })}
             />
 
             {role === "admin" && (
@@ -112,7 +112,7 @@ function CustomDrawerContent({ navigation }: any) {
             )}
 
             {role === "volunteer" && (
-                <DrawerItem label="Tasks" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("Tabs", { screen: "Tasks" })} />
+                <DrawerItem label="Assigned Schedules" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("Tabs", { screen: "AssignedSchedules" })} />
             )}
 
             <DrawerItem label="Settings" labelStyle={{ color: theme.colors.text }} onPress={() => navigation.navigate("Settings", { screen: "Settings" })} />
@@ -123,7 +123,7 @@ function CustomDrawerContent({ navigation }: any) {
             <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: theme.colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <Text style={{ color: theme.colors.text, marginBottom: 8 }}>Dark Mode</Text>
                 <Switch
-                    value={mode === "dark"}
+                    value={mode === "dark" || mode === "system"}
                     onValueChange={(val) => setMode(val ? "dark" : "light")}
                     thumbColor={mode === "dark" ? "#fff" : "#fff"}
                     trackColor={{ true: "#007AFF", false: "#ccc" }}

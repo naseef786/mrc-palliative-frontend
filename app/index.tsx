@@ -7,5 +7,5 @@ export default function Index() {
   if (!role) return <Redirect href="/(auth)/login" />;
 
   // All logged-in users go to tab navigator
-  return <Redirect href="/(main)/home" />;
+  return <Redirect href="/(main)/analytics" />;
 }
